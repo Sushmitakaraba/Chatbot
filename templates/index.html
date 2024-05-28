@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        /* Basic Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden; /* Prevent scrolling */
+            position: relative; /* Ensure relative positioning for absolute children */
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff; /* White text color */
+            background: linear-gradient(to right, #8a2be2, hsl(330, 86%, 49%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 2; /* Ensure the h1 is above other elements */
+            margin-bottom: 20px;
+        }
+
+        #chat-heading {
+            position: absolute;
+            top: 10px;
+            left: 30px;
+            color: #ece7e7; /* Change color to dark gray */
+            z-index: 2; /* Ensure the heading is above other elements */
+        }
+
+        #chat-container {
+            max-width: 800px; /* Adjust max-width as needed */
+            padding: 20px;
+            background-color: #fff; /* Change to white */
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            height: 400px;
+            width: calc(100% - 80px); /* Adjust width as needed */
+            position: absolute; /* Change to absolute */
+            
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            display: none;
+        }
+
+        /* Chat Messages */
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            word-wrap: break-word;
+            width: auto; /* Set width to auto */
+            display: block; /* Display messages as block elements */
+            clear: both; /* Clear floats */
+        }
+
+        /* User Messages */
+        .user-message {
+            background-color: #c71585;
+            color: #fff;
+            text-align: right; /* Align text to the right */
+            float: right; /* Float messages to the right */
+        }
+
+        /* Bot Messages */
+        .bot-message {
+            background-color: #f17ef5;
+            color: #333;
+            text-align: left; /* Align text to the left */
+            float: left; /* Float messages to the left */
+        }
+
+        /* User Input */
+        #user-input-container {
+            position: absolute;
+            bottom: 10px; /* Adjust the bottom position */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            z-index: 1; /* Lift user input container above image */
+            display: none; /* Initially hide the user input container */
+        }
+
+        #user-input {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #f8f3f3;
+            outline: none;
+            max-width: calc(100% - 90px); /* Adjust input field width */
+        }
+
+        #send-button {
+            width: 80px;
+            height: 40px;
+            margin-left: 10px;
+            background: linear-gradient(to right, #8a2be2, hsl(330, 86%, 49%));
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #send-button:hover {
+            background-color: #6fc6d4;
+        }
+
+        /* Image */
+        #image-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0; /* Ensure image stays behind chat container */
+        }
+        
+        #image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+       /* Intro Container */
+/* Intro Container */
+#intro-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+    color: #fff;
+    z-index: 3; /* Highest z-index to be on top */
+    animation: fadeOut 3s forwards; /* Fade out animation */
+    font-size: x-large;
+}
+
+/* Color of h1 */
+#intro-container h1 {
+    color: pink;
+}
+
+
+
+        /* Keyframes for fade out */
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Keyframes for slide in */
+        @keyframes slideIn {
+            0% { transform: translateY(100%); }
+            100% { transform: translateY(0); }
+        }
+
+        /* Apply slide in animation to the chatbot container */
+        #chat-container.slide-in {
+            animation: slideIn 1s forwards;
+        }
+    </style>
+</head>
+<body>
+        <div id="intro-container">
+            <h1>Fitmate</h1>
+            <p>Your fitness companion</p>
+        </div>
+    <div id="chat-heading">
+        <h2>Fitmate</h2>
+    </div>
+    <div id="chat-container">
+        <!-- Chat messages will be displayed here -->
+    </div>
+    <div id="user-input-container">
+        <input type="text" id="user-input" placeholder="Type your message...">
+        <button id="send-button">Ask</button>
+    </div>
+    <div id="image-container">
+        <img src="/static/back.jpg" alt="Image">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var introContainer = document.getElementById('intro-container');
+            var chatContainer = document.getElementById('chat-container');
+            var userInputContainer = document.getElementById('user-input-container');
+            var userInput = document.getElementById('user-input');
+            var sendButton = document.getElementById('send-button');
+
+            // Function to send the message
+            function sendMessage() {
+                var message = userInput.value.trim();
+                if (message !== '') {
+                    appendMessage(message, 'user');
+                    userInput.value = '';
+                    sendMessageToBackend(message);
+                }
+            }
+
+            sendButton.addEventListener('click', function () {
+                sendMessage();
+            });
+
+            // Add event listener for the Enter key
+            userInput.addEventListener('keypress', function (event) {
+                if (event.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            function appendMessage(message, sender) {
+                var messageDiv = document.createElement('div');
+                messageDiv.textContent = message;
+                messageDiv.classList.add('chat-message', sender + '-message');
+                chatContainer.appendChild(messageDiv);
+                chatContainer.appendChild(document.createElement('br')); // Add line break
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            function sendMessageToBackend(message) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/get_response', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText).response;
+                        appendMessage(response, 'bot');
+                    }
+                };
+                xhr.send(JSON.stringify({ message: message }));
+            }
+
+            // Hide the intro and show the chatbot after 3 seconds
+            setTimeout(function () {
+                introContainer.style.display = 'none';
+                chatContainer.style.display = 'block';
+                userInputContainer.style.display = 'flex';
+                chatContainer.classList.add('slide-in');
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
